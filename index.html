@@ -13,17 +13,65 @@
     <div id="container"></div>
     <div id="info">
       TextureMerger example
+      <button onclick=handleclick()></button>
     </div>
 
     <script type="module">
       import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.114/build/three.module.js';
-        
       import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.114/examples/jsm/controls/OrbitControls.js';
       import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.114/examples/jsm/loaders/GLTFLoader.js';
+      import { GLTFExporter } from 'https://cdn.jsdelivr.net/npm/three@0.114/examples/jsm/exporters/GLTFExporter.js';
       import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.114/examples/jsm/loaders/RGBELoader.js';
 
+      window.handleclick = () => {
+        exportGLTF(model)
+      }
 
-   
+			function exportGLTF( input ) {
+        const gltfExporter = new GLTFExporter();
+        const options = {
+          trs: false,
+          onlyVisible: false,
+          truncateDrawRange: true,
+          binary: true,
+          forcePowerOfTwoTextures: false,
+          maxTextureSize: 1024 || Infinity,
+        };
+        gltfExporter.parse(
+          input,
+          function ( result ) {
+            if ( result instanceof ArrayBuffer ) {
+              saveArrayBuffer( result, 'scene.glb' );
+            } else {
+              const output = JSON.stringify( result, null, 2 );
+              console.log( output );
+              saveString( output, 'scene.gltf' );
+            }
+          },
+          function ( error ) {
+            console.log( 'An error happened during parsing', error );
+          },
+          options
+        );
+      }
+
+      const link = document.createElement( 'a' );
+      link.style.display = 'none';
+      document.body.appendChild( link ); // Firefox workaround, see #6594
+
+      function save( blob, filename ) {
+        link.href = URL.createObjectURL( blob );
+        link.download = filename;
+        link.click();
+      }
+
+      function saveString( text, filename ) {
+        save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+      }
+
+      function saveArrayBuffer( buffer, filename ) {
+        save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+      }
 
       function modifyChildUV(mesh, range){
         var uvAttrAry = mesh.geometry.attributes.uv.array;
@@ -76,25 +124,22 @@
 
       const controls = new OrbitControls(camera, renderer.domElement);
 
-    var textureArray = [];
-    var meshArray = [];
-
-    var loader = new GLTFLoader();
-    loader.load('./model/com.glb', function(gltf) {
-      var model = gltf.scene;
-      scene.add(model);
-      console.log('aaaaaaaaaaa',model)
-      model.traverse( function ( child ) {
-        if ( child.isMesh ) {
-          var material = child.material;
-          textureArray.push(material.map)
-          meshArray.push(child)
-          console.log(textureArray)
-          console.log(meshArray)
-        }
+      var textureArray = [];
+      var meshArray = [];
+      var model;
+      var loader = new GLTFLoader();
+      loader.load('./model/space.glb', function(gltf) {
+        model = gltf.scene;
+        console.log(model)
+        scene.add(model);
+        model.traverse( function ( child ) {
+          if ( child.isMesh ) {
+            textureArray.push(child.material.map)
+            meshArray.push(child)
+          }
+        })
+        onMerging(textureArray, meshArray);
       })
-      onMerging(textureArray, meshArray);
-    })
 
       // render loop
       render();
