@@ -63,13 +63,18 @@ var TextureMerger = function(texturesObj){
   }
   this.canvas = document.createElement("canvas");
   this.textureCount = 0;
-  this.maxWidth = 0;
-  this.maxHeight = 0;
+  this.maxWidth = 2048;
+  this.maxHeight = 2048;
   var explanationStr = "";
   for (textureName in texturesObj){
     this.textureCount ++;
     var texture = texturesObj[textureName];
+    console.log(texture.image.width)
+    texture.image.width = this.maxWidth;
+    texture.image.height = this.maxHeight;
     texture.area = texture.image.width * texture.image.height;
+    console.log(texture.image.width)
+
     if (texture.image.width > this.maxWidth){
       this.maxWidth = texture.image.width;
     }
