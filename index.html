@@ -13,7 +13,8 @@
     <div id="container"></div>
     <div id="info">
       TextureMerger example
-      <button onclick=handleclick()></button>
+      <button onclick=handleclick()>Export</button>
+      <button onclick=handleMerge()>Merge</button>
     </div>
 
     <script type="module">
@@ -28,6 +29,9 @@
         exportGLTF(model)
       }
 
+      window.handleMerge = () => {
+        onMerging(textureArray, meshArray);
+      }
 			function exportGLTF( input ) {
         const gltfExporter = new GLTFExporter();
         const options = {
@@ -45,7 +49,6 @@
               saveArrayBuffer( result, 'scene.glb' );
             } else {
               const output = JSON.stringify( result, null, 2 );
-              console.log( output );
               saveString( output, 'scene.gltf' );
             }
           },
@@ -76,6 +79,8 @@
 
       function modifyChildUV(mesh, range){
         var uvAttrAry = mesh.geometry.attributes.uv.array;
+        console.log(mesh)
+        
         for (var i = 0; i < uvAttrAry.length; i += 2){
           uvAttrAry[i] = (uvAttrAry[i] * (range.endU - range.startU) + range.startU);
           uvAttrAry[i + 1] = (uvAttrAry[i + 1] * (range.startV - range.endV) + range.endV);
@@ -90,11 +95,11 @@
         })
         textureMerger =  new TextureMerger(pros);
         textureMerger.mergedTexture.flipY = false;
+            console.log(textureMerger.mergedTexture)
+
         meshArray.map((mesh, index) => {
           modifyChildUV(mesh, textureMerger.ranges['texture' + (index+1)]);
           mesh.material.map = textureMerger.mergedTexture;
-          // mesh.material.map.repeat.set(-1, 1);
-          // mesh.material.map.center.set(0.5,0.5);
         })
       };
 
@@ -182,14 +187,13 @@
       var loader = new GLTFLoader();
       loader.load('./model/test.glb', function(gltf) {
         model = gltf.scene;
-        scene.add(model);
+        scene.add(model)
         model.traverse( function ( child ) {
           if ( child.isMesh ) {
             textureArray.push(child.material.map)
             meshArray.push(child)
           }
         })
-        onMerging(textureArray, meshArray);
       })
       // render loop
       render();
